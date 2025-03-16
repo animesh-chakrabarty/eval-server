@@ -7,8 +7,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("Email can't be empty")
         if not password:
             raise ValueError("Password can't be empty")
-        email = self.normalize_email(email)
-        extra_fields.setdefault("is_active", True)
+        email = self.normalize_email(email)        
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -18,6 +17,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault('role', User.Role.ADMIN)
+        extra_fields["is_active"] = True
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
@@ -34,9 +34,14 @@ class User(AbstractUser):
         choices= Role.choices,
         default=Role.CANDIDATE
     )
+    is_active = models.BooleanField(default=False)
     username = None
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+class UserOTPMapping(models.Model):
+    userId = models.OneToOneField('users.User', on_delete=models.CASCADE)
+    OTP = models.CharField(max_length=6)
